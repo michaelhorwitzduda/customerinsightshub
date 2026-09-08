@@ -1,4 +1,4 @@
-// Publish: build -> test -> encrypt (pagecrypt) -> decrypt-verify -> commit + push docs/index.html
+// Publish: build -> test -> encrypt (pagecrypt) -> decrypt-verify -> commit + push index.html (repo root; GitHub Pages serves main /)
 //   node scripts/publish.mjs          full publish
 //   node scripts/publish.mjs --dry    everything except commit/push
 //   HUB_CONTENT_DIR=<dir>             read hub.json/sources.json from <dir> instead of content/
@@ -21,9 +21,9 @@ const fail = (msg) => { console.error(`PUBLISH ABORTED: ${msg}`); process.exit(1
 
 let hub;
 try {
-  // 1. Working tree must be clean apart from docs/ (content/ and dist/ are gitignored).
-  const dirty = git('status', '--porcelain').split('\n').filter(Boolean).filter(l => !l.slice(3).startsWith('docs/'));
-  if (dirty.length) fail(`uncommitted changes outside docs/:\n${dirty.join('\n')}\nCommit source first so the published page matches a real commit.`);
+  // 1. Working tree must be clean apart from the published index.html (content/ and dist/ are gitignored).
+  const dirty = git('status', '--porcelain').split('\n').filter(Boolean).filter(l => l.slice(3) !== 'index.html');
+  if (dirty.length) fail(`uncommitted changes outside index.html:\n${dirty.join('\n')}\nCommit source first so the published page matches a real commit.`);
 
   // 2. Test, then build (tests run first as a guard before we touch the build output).
   console.log('testing…');
@@ -56,15 +56,14 @@ try {
     const dryOut = resolve(ROOT, 'dist/hub.encrypted.html');
     mkdirSync(resolve(ROOT, 'dist'), { recursive: true });
     writeFileSync(dryOut, encrypted);
-    console.log(`--dry: wrote verified output to ${dryOut} (docs/index.html untouched); skipping commit/push`);
+    console.log(`--dry: wrote verified output to ${dryOut} (index.html untouched); skipping commit/push`);
     process.exit(0);
   }
-  mkdirSync(resolve(ROOT, 'docs'), { recursive: true });
-  writeFileSync(resolve(ROOT, 'docs/index.html'), encrypted);
+  writeFileSync(resolve(ROOT, 'index.html'), encrypted);
 
   // 6. Commit and push.
-  git('add', 'docs/index.html');
-  if (!git('status', '--porcelain', '--', 'docs/index.html')) { console.log('nothing to publish — docs/index.html unchanged'); process.exit(0); }
+  git('add', 'index.html');
+  if (!git('status', '--porcelain', '--', 'index.html')) { console.log('nothing to publish — index.html unchanged'); process.exit(0); }
   const date = new Date().toISOString().slice(0, 10);
   git('commit', '-m', `Publish hub ${date}\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`);
   try {

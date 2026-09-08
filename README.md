@@ -1,7 +1,7 @@
 # Customer Insights Hub (password-protected)
 
 One page for Duda sales and marketing that summarizes our customer-insight
-sources and opens each dashboard in one click. `docs/index.html` is the only
+sources and opens each dashboard in one click. `index.html` at the repo root is the only
 published file: a self-contained page encrypted client-side with
 [pagecrypt](https://github.com/Greenheart/pagecrypt) (AES-GCM via WebCrypto,
 PBKDF2 with 2,000,000 iterations). Nothing here is readable without the hub
@@ -33,7 +33,7 @@ name exactly as spelled above.
   `src/validate.mjs` rejects missing fields, placeholders, non-https URLs and
   bad colors before anything is rendered.
 - `scripts/publish.mjs` runs the tests, builds, encrypts, verifies the result
-  decrypts byte-for-byte, then commits and pushes `docs/index.html`.
+  decrypts byte-for-byte, then commits and pushes `index.html`.
 - `test/` runs with `npm test` against fixture content in `test/fixtures/`.
 
 ## Refreshing
@@ -48,7 +48,7 @@ npm run release        # test + build + encrypt + verify + commit + push
 `npm run release -- --dry` does everything except commit and push; the verified
 encrypted output goes to `dist/hub.encrypted.html` and the tracked tree is left
 untouched. Publishing refuses to run while there are uncommitted changes
-outside `docs/`, so the published page always matches a real commit.
+other than `index.html`, so the published page always matches a real commit.
 
 **A dashboard was re-encrypted** (each pagecrypt run makes a new password):
 update that source's `dashboard.password` in `content/sources.json`, then
@@ -67,5 +67,5 @@ typed message.
 
 ## GitHub Pages
 
-Settings, Pages, Deploy from a branch, `main`, folder `/docs`. Only
-`docs/index.html` is served; source files are never published unencrypted.
+Settings, Pages, Deploy from a branch, `main`, folder `/ (root)`. Only
+the encrypted `index.html` is served (plus this README and the docs folder, which hold no secrets); source files are never published unencrypted.
