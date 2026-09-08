@@ -43,10 +43,10 @@ export function buildHtml({ hub, sources, template, buildDate }) {
     .replace('{{TITLE}}', () => escapeHtml(hub.title));
 }
 
-export function buildFromContent() {
-  const read = p => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8'));
-  const hub = read('content/hub.json');
-  const sources = read('content/sources.json');
+export function buildFromContent(contentDir = resolve(ROOT, 'content')) {
+  const read = p => JSON.parse(readFileSync(resolve(contentDir, p), 'utf8'));
+  const hub = read('hub.json');
+  const sources = read('sources.json');
   const template = readFileSync(resolve(ROOT, 'src/template.html'), 'utf8');
   const buildDate = new Date().toISOString().slice(0, 10);
   const html = buildHtml({ hub, sources, template, buildDate });

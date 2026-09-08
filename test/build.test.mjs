@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { buildHtml, serializeData } from '../src/build.mjs';
+import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { buildHtml, serializeData, buildFromContent } from '../src/build.mjs';
 
 const hub = JSON.parse(readFileSync(new URL('./fixtures/hub.json', import.meta.url)));
 const sources = JSON.parse(readFileSync(new URL('./fixtures/sources.json', import.meta.url)));
@@ -101,4 +102,10 @@ test('template missing /*__DATA__*/ placeholder throws', () => {
 test('template missing {{TITLE}} placeholder throws', () => {
   const badTemplate = template.replace('{{TITLE}}', 'NOPE');
   assert.throws(() => buildHtml({ hub, sources, template: badTemplate, buildDate: '2026-09-08' }), /TITLE/);
+});
+
+test('buildFromContent accepts a contentDir override and writes dist/hub.html', () => {
+  const out = buildFromContent(fileURLToPath(new URL('./fixtures', import.meta.url)));
+  assert.ok(existsSync(out));
+  assert.ok(readFileSync(out, 'utf8').includes('<title>Fixture Hub</title>'));
 });
