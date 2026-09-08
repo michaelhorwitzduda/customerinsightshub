@@ -1,0 +1,13 @@
+{
+  "name": "customer-insights-hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "test": "node --test test/",
+    "release": "node scripts/publish.mjs"
+  },
+  "devDependencies": {
+    "pagecrypt": "^7.1.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "title": "Fixture Hub",
+  "intro": "Fixture intro text.",
+  "hubPassword": "HUBSECRET123",
+  "ownerName": "Owner Name",
+  "ownerEmail": "owner@example.com",
+  "slackWebhookUrl": "https://hooks.slack.com/triggers/T000/111/abc",
+  "feedbackTypes": ["Data request", "Question"]
+}

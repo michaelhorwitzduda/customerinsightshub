@@ -1,0 +1,30 @@
+[
+  {
+    "key": "g2",
+    "name": "G2 Reviews",
+    "icon": "star",
+    "accent": "#F5A623",
+    "purpose": "What verified customers say publicly about Duda, by segment and rating.",
+    "audience": ["sales", "marketing"],
+    "coverage": {
+      "sampleSize": "845 reviews",
+      "dateRange": "Jan 2016 to Aug 2026",
+      "lastRefreshed": "2026-08-15"
+    },
+    "bestFor": {
+      "sales": "Third-party proof for objection handling.",
+      "marketing": "Messaging themes and competitor mentions."
+    },
+    "findings": [
+      "Example finding one.",
+      "Example finding two."
+    ],
+    "quotes": [
+      { "text": "Example verbatim quote.", "context": "Agency owner, 11 to 50 employees, 5 stars, Mar 2026" }
+    ],
+    "dashboard": {
+      "url": "https://michaelhorwitzduda.github.io/g2reviewsdashboard/",
+      "password": "REPLACE_WITH_DASHBOARD_PASSWORD"
+    }
+  }
+]

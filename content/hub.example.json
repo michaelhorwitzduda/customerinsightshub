@@ -1,0 +1,9 @@
+{
+  "title": "Customer Insights Hub",
+  "intro": "One place to see what Duda customers say and do, and to open the dashboards behind it.",
+  "hubPassword": "REPLACE_WITH_HUB_PASSWORD",
+  "ownerName": "Michael Horwitz",
+  "ownerEmail": "michael.horwitz@duda.co",
+  "slackWebhookUrl": "https://hooks.slack.com/triggers/REPLACE/WITH/REAL",
+  "feedbackTypes": ["Data request", "Question", "Bug", "Idea"]
+}

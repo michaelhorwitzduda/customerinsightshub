@@ -1,0 +1,28 @@
+[
+  {
+    "key": "alpha",
+    "name": "Alpha Source",
+    "icon": "star",
+    "accent": "#112233",
+    "purpose": "Alpha purpose.",
+    "audience": ["sales"],
+    "coverage": { "sampleSize": "10 items", "dateRange": "2025", "lastRefreshed": "2026-01-01" },
+    "bestFor": { "sales": "Alpha for sales.", "marketing": "Alpha for marketing." },
+    "findings": ["Alpha finding."],
+    "quotes": [{ "text": "Alpha quote.", "context": "Alpha context" }],
+    "dashboard": { "url": "https://example.com/alpha/", "password": "ALPHASECRET" }
+  },
+  {
+    "key": "beta",
+    "name": "Beta Source",
+    "icon": "chat",
+    "accent": "#445566",
+    "purpose": "Beta purpose.",
+    "audience": ["sales", "marketing"],
+    "coverage": { "sampleSize": "20 items", "dateRange": "2026", "lastRefreshed": "2026-02-02" },
+    "bestFor": { "sales": "Beta for sales.", "marketing": "Beta for marketing." },
+    "findings": ["Beta finding one.", "Beta finding two."],
+    "quotes": [{ "text": "Beta quote.", "context": "Beta context" }],
+    "dashboard": { "url": "https://example.com/beta/", "password": "BETA SECRET+1" }
+  }
+]
