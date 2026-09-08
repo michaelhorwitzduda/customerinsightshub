@@ -5,14 +5,17 @@ const AUDIENCES = new Set(['sales', 'marketing']);
 
 function isPlaceholder(str) {
   const t = str.trim();
-  return t === '...' || /\bTODO\b|\bTBD\b/.test(t) || /<[^>]+>/.test(t);
+  return t === '...' || /\bTODO\b|\bTBD\b/.test(t) || /<[^>]+>/.test(t) || /\bREPLACE(_WITH)?/i.test(t);
 }
 
 function requireString(obj, path, key) {
   const v = obj[key];
   const full = `${path}.${key}`;
   if (typeof v !== 'string' || v.trim() === '') throw new Error(`${full} is required and must be a non-empty string`);
-  if (isPlaceholder(v)) throw new Error(`${full} contains a placeholder marker: ${JSON.stringify(v)}`);
+  if (isPlaceholder(v)) {
+    const shown = /password/i.test(String(key)) ? '[redacted]' : JSON.stringify(v);
+    throw new Error(`${full} contains a placeholder marker: ${shown}`);
+  }
   return v;
 }
 
@@ -72,7 +75,8 @@ function validateSource(s, p) {
     requireString(q, `${p}.quotes[${i}]`, 'context');
   });
   if (!s.dashboard || typeof s.dashboard !== 'object') throw new Error(`${p}.dashboard is required`);
-  requireHttpsUrl(s.dashboard, `${p}.dashboard`, 'url');
+  const dashboardUrl = requireHttpsUrl(s.dashboard, `${p}.dashboard`, 'url');
+  if (new URL(dashboardUrl).hash) throw new Error(`${p}.dashboard.url must not contain a # fragment`);
   requireString(s.dashboard, `${p}.dashboard`, 'password');
 }
 

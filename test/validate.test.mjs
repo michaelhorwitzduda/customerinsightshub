@@ -17,10 +17,20 @@ test('hub: empty required string fails with field name', () => {
 });
 
 test('hub: placeholder markers fail', () => {
-  for (const bad of ['TODO write this', 'TBD', '...', 'https://hooks.slack.com/<fill in>']) {
+  for (const bad of ['TODO write this', 'TBD', '...', 'https://hooks.slack.com/<fill in>', 'REPLACE_WITH_HUB_PASSWORD', 'https://hooks.slack.com/triggers/REPLACE/WITH/REAL']) {
     const h = hub(); h.slackWebhookUrl = bad;
     assert.throws(() => validateHub(h), /placeholder/);
   }
+});
+
+test('hub: example content is rejected as placeholder', () => {
+  const exampleHub = JSON.parse(readFileSync(new URL('../content/hub.example.json', import.meta.url)));
+  assert.throws(() => validateHub(exampleHub), /placeholder/);
+});
+
+test('sources: example content is rejected as placeholder', () => {
+  const exampleSources = JSON.parse(readFileSync(new URL('../content/sources.example.json', import.meta.url)));
+  assert.throws(() => validateSources(exampleSources), /placeholder/);
 });
 
 test('hub: webhook must be https URL', () => {
@@ -73,4 +83,19 @@ test('sources: quote needs text and context', () => {
 test('sources: nested coverage field placeholder fails', () => {
   const s = sources(); s[1].coverage.dateRange = 'TBD';
   assert.throws(() => validateSources(s), /sources\[1\]\.coverage\.dateRange/);
+});
+
+test('sources: dashboard url must not contain a # fragment', () => {
+  const s = sources(); s[0].dashboard.url = 'https://example.com/alpha/#top';
+  assert.throws(() => validateSources(s), /sources\[0\]\.dashboard\.url/);
+});
+
+test('hub: password value is redacted in error messages', () => {
+  const h = hub(); h.hubPassword = 'TODO-secret-value';
+  assert.throws(() => validateHub(h), err => {
+    assert.match(err.message, /placeholder/);
+    assert.ok(!err.message.includes('secret-value'));
+    assert.match(err.message, /\[redacted\]/);
+    return true;
+  });
 });

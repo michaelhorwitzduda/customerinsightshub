@@ -11,24 +11,36 @@ function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+export function serializeData(data) {
+  // Escape "<" so the JSON can never close the script tag.
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
 export function buildHtml({ hub, sources, template, buildDate }) {
   validateHub(hub);
   validateSources(sources);
+  if (typeof buildDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(buildDate)) {
+    throw new Error('buildDate must be a YYYY-MM-DD string');
+  }
   if (!template.includes('/*__DATA__*/')) throw new Error('template is missing the /*__DATA__*/ placeholder');
   if (!template.includes('{{TITLE}}')) throw new Error('template is missing the {{TITLE}} placeholder');
 
   const publicSources = sources.map(s => {
-    const { url, password } = s.dashboard;
-    return { ...s, dashboard: { url, magicLink: `${url}#${encodeURIComponent(password)}` } };
+    const { key, name, icon, accent, purpose, audience, coverage, bestFor, findings, quotes, dashboard } = s;
+    const { url, password } = dashboard;
+    return {
+      key, name, icon, accent, purpose, audience, coverage, bestFor, findings, quotes,
+      dashboard: { url, magicLink: `${url}#${encodeURIComponent(password)}` },
+    };
   });
-  const { hubPassword, ...publicHub } = hub;
+  const { title, intro, ownerName, ownerEmail, slackWebhookUrl, feedbackTypes } = hub;
+  const publicHub = { title, intro, ownerName, ownerEmail, slackWebhookUrl, feedbackTypes };
   const data = { hub: publicHub, sources: publicSources, buildDate };
-  // Escape "<" so the JSON can never close the script tag.
-  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  const json = serializeData(data);
 
   return template
-    .replace('{{TITLE}}', () => escapeHtml(hub.title))
-    .replace('/*__DATA__*/', () => json);
+    .replace('/*__DATA__*/', () => json)
+    .replace('{{TITLE}}', () => escapeHtml(hub.title));
 }
 
 export function buildFromContent() {

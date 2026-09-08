@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildHtml } from '../src/build.mjs';
+import { buildHtml, serializeData } from '../src/build.mjs';
 
 const hub = JSON.parse(readFileSync(new URL('./fixtures/hub.json', import.meta.url)));
 const sources = JSON.parse(readFileSync(new URL('./fixtures/sources.json', import.meta.url)));
@@ -62,4 +62,43 @@ test('build date and title are injected', () => {
 test('invalid content is rejected before rendering', () => {
   const bad = JSON.parse(JSON.stringify(sources)); bad[0].findings = [];
   assert.throws(() => buildHtml({ hub, sources: bad, template, buildDate: '2026-09-08' }), /findings/);
+});
+
+test('unknown/unlisted fields are not embedded (allowlist, not denylist)', () => {
+  const hubWithExtra = { ...JSON.parse(JSON.stringify(hub)), adminToken: 'SUPERSECRET' };
+  const sourcesWithExtra = JSON.parse(JSON.stringify(sources));
+  sourcesWithExtra[0].internalNote = 'INTERNALSECRET';
+  const out = buildHtml({ hub: hubWithExtra, sources: sourcesWithExtra, template, buildDate: '2026-09-08' });
+  assert.ok(!out.includes('SUPERSECRET'));
+  assert.ok(!out.includes('INTERNALSECRET'));
+});
+
+test('serializeData escapes "<" so a script tag cannot be closed, and round-trips', () => {
+  const payload = '</script><script>alert(1)</script>';
+  const result = serializeData({ a: payload });
+  assert.ok(!result.includes('<'));
+  assert.equal(JSON.parse(result).a, payload);
+});
+
+test('/*__DATA__*/ is replaced before {{TITLE}}, so a title cannot swallow the data placeholder', () => {
+  const trickyHub = JSON.parse(JSON.stringify(hub));
+  trickyHub.title = '/*__DATA__*/';
+  const out = buildHtml({ hub: trickyHub, sources, template, buildDate: '2026-09-08' });
+  assert.ok(out.includes('window.HUB_DATA = {'));
+  assert.ok(out.includes('<title>/*__DATA__*/</title>'));
+});
+
+test('buildDate is required and must be a YYYY-MM-DD string', () => {
+  assert.throws(() => buildHtml({ hub, sources, template }), /buildDate/);
+  assert.throws(() => buildHtml({ hub, sources, template, buildDate: '09/08/2026' }), /buildDate/);
+});
+
+test('template missing /*__DATA__*/ placeholder throws', () => {
+  const badTemplate = template.replace('/*__DATA__*/', 'NOPE');
+  assert.throws(() => buildHtml({ hub, sources, template: badTemplate, buildDate: '2026-09-08' }), /__DATA__/);
+});
+
+test('template missing {{TITLE}} placeholder throws', () => {
+  const badTemplate = template.replace('{{TITLE}}', 'NOPE');
+  assert.throws(() => buildHtml({ hub, sources, template: badTemplate, buildDate: '2026-09-08' }), /TITLE/);
 });
