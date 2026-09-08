@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node src/build.mjs",
-    "test": "node --test test/",
+    "test": "node --test",
     "release": "node scripts/publish.mjs"
   },
   "devDependencies": {
