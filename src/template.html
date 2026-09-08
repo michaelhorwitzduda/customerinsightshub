@@ -19,7 +19,7 @@
   .meta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; color: var(--muted); font-size: 13px; }
   .tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; }
   .tag.sales { background: var(--sales); } .tag.marketing { background: var(--marketing); }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 20px; margin-top: 32px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; gap: 14px; border-top: 5px solid var(--accent); }
   .card-head { display: flex; gap: 14px; align-items: flex-start; }
   .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 22px; flex: none; }
@@ -36,6 +36,7 @@
   details summary { cursor: pointer; padding: 10px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
   details summary::after { content: "+"; color: var(--muted); }
   details[open] summary::after { content: "–"; }
+  details summary::-webkit-details-marker { display: none; }
   details ul { margin: 0 0 12px; padding-left: 18px; }
   details li { margin: 6px 0; }
   .quote { border-left: 3px solid var(--accent); padding: 6px 12px; margin: 0 0 12px; background: var(--bg); border-radius: 0 8px 8px 0; }
@@ -44,9 +45,9 @@
   .copy { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
   .copy.done { color: var(--ok); border-color: var(--ok); }
   .fab { position: fixed; right: 22px; bottom: 22px; background: var(--ink); color: #fff; border: 0; border-radius: 999px; padding: 14px 20px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
-  .modal { position: fixed; inset: 0; background: rgba(20,26,34,.45); display: none; align-items: center; justify-content: center; padding: 20px; }
-  .modal.on { display: flex; }
-  .sheet { background: #fff; border-radius: var(--radius); padding: 24px; width: 100%; max-width: 520px; display: grid; gap: 12px; }
+  .modal { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; }
+  .modal::backdrop { background: rgba(20,26,34,.45); }
+  .sheet { background: #fff; border-radius: var(--radius); padding: 24px; width: min(520px, calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow-y: auto; margin: 0 auto; display: grid; gap: 12px; }
   .sheet h3 { margin: 0; }
   .sheet label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
   .sheet input, .sheet select, .sheet textarea { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; width: 100%; }
@@ -77,20 +78,20 @@
 
 <button class="fab" id="fab" type="button">Request or feedback</button>
 
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+<dialog class="modal" id="modal" aria-labelledby="fb-title">
   <form class="sheet" id="fb-form">
     <h3 id="fb-title">Request or feedback</h3>
     <label>Type <select name="type" id="fb-type" required></select></label>
     <label>Related source <select name="source" id="fb-source" required></select></label>
     <label>Message <textarea name="message" id="fb-message" required placeholder="What do you need, or what did you notice?"></textarea></label>
     <label>Your name <input name="name" id="fb-name" required autocomplete="name"></label>
-    <div class="note" id="fb-note"></div>
+    <div class="note" id="fb-note" role="status" aria-live="polite"></div>
     <div class="row">
       <button class="btn" type="button" id="fb-cancel">Cancel</button>
       <button class="btn primary" type="submit" id="fb-send">Send</button>
     </div>
   </form>
-</div>
+</dialog>
 
 <script>window.HUB_DATA = /*__DATA__*/;</script>
 <script>
@@ -111,7 +112,6 @@
   };
 
   // Header
-  document.title = D.hub.title;
   $('title').textContent = D.hub.title;
   $('intro').textContent = D.hub.intro;
   $('updated').textContent = D.buildDate;
@@ -137,6 +137,9 @@
       el('ul', {}, ...s.findings.map(f => el('li', {}, f))));
     const quotes = el('details', {}, el('summary', {}, 'Quotes you can use (' + s.quotes.length + ')'),
       ...s.quotes.map(renderQuote));
+    // href and the --accent style are safe here only because src/validate.mjs enforces an https,
+    // fragment-free dashboard.url (build.mjs appends only an encoded password as the fragment) and
+    // an anchored 6-digit hex color for accent.
     return el('article', { class: 'card', style: '--accent:' + s.accent }, head, cov, open, best, findings, quotes);
   }
 
@@ -144,31 +147,50 @@
     const btn = el('button', { class: 'copy', type: 'button' }, 'Copy');
     btn.addEventListener('click', async () => {
       const text = '"' + q.text + '" — ' + q.context;
+      let ok = false;
+      let ta = null;
       try {
         await navigator.clipboard.writeText(text);
+        ok = true;
       } catch {
-        const ta = el('textarea', {}, text); document.body.append(ta); ta.select();
-        try { document.execCommand('copy'); } finally { ta.remove(); }
+        ta = el('textarea', {}, text); document.body.append(ta); ta.select();
+        ok = document.execCommand('copy');
       }
-      btn.textContent = 'Copied'; btn.classList.add('done');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1500);
+      if (btn._resetTimer) clearTimeout(btn._resetTimer);
+      if (ok) {
+        if (ta) ta.remove();
+        btn.textContent = 'Copied'; btn.classList.add('done');
+      } else {
+        btn.textContent = 'Press Ctrl+C'; btn.classList.remove('done');
+        if (ta) ta.select();
+      }
+      btn._resetTimer = setTimeout(() => {
+        btn.textContent = 'Copy'; btn.classList.remove('done');
+        if (ta) ta.remove();
+      }, 1500);
     });
     return el('blockquote', { class: 'quote' },
       el('p', {}, '“' + q.text + '”'),
       el('div', { class: 'ctx' }, el('span', {}, q.context), btn));
   }
 
-  // Feedback modal (submit logic in feedback section below)
+  // Feedback modal
   const modal = $('modal'), form = $('fb-form'), note = $('fb-note');
   for (const t of D.hub.feedbackTypes) $('fb-type').append(el('option', { value: t }, t));
   $('fb-source').append(el('option', { value: 'General' }, 'General'));
   for (const s of D.sources) $('fb-source').append(el('option', { value: s.name }, s.name));
-  const openModal = () => { modal.classList.add('on'); $('fb-message').focus(); };
-  const closeModal = () => { modal.classList.remove('on'); note.textContent = ''; note.className = 'note'; };
+  const openModal = () => { modal.showModal(); $('fb-message').focus(); };
+  const closeModal = () => { modal.close(); };
   $('fab').addEventListener('click', openModal);
   $('fb-cancel').addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('on')) closeModal(); });
+  modal.addEventListener('close', () => {
+    note.textContent = ''; note.className = 'note';
+    sending = false;
+    $('fb-send').disabled = false;
+  });
+
+  let sending = false;
 
   function payload() {
     return {
@@ -191,16 +213,21 @@
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body: JSON.stringify(p),
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    if (!/"ok"\s*:\s*true/.test(text)) throw new Error('Slack did not confirm: ' + text.slice(0, 120));
+    let data;
+    try { data = JSON.parse(text); } catch {}
+    if (!data || data.ok !== true) throw new Error('Slack did not confirm: ' + text.slice(0, 120));
   }
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
+    if (sending) return;
     const p = payload();
     if (!p.message || !p.name) { note.textContent = 'Please add a message and your name.'; note.className = 'note err'; return; }
+    sending = true;
     $('fb-send').disabled = true; note.textContent = 'Sending…'; note.className = 'note';
     try {
       await sendToSlack(p);
@@ -213,7 +240,7 @@
       note.className = 'note err';
       note.append('Could not reach Slack (' + err.message + '). ',
         el('a', { href: mailtoFor(p) }, 'Send it by email instead'), ' — your message is kept below.');
-    } finally {
+      sending = false;
       $('fb-send').disabled = false;
     }
   });
