@@ -1,0 +1,4 @@
+content/*
+!content/*.example.json
+dist/
+node_modules/

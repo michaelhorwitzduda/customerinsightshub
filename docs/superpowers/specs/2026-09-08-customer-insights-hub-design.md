@@ -26,8 +26,9 @@ Sources in scope for v1:
    password shared with the team. Inside, each dashboard opens via its pagecrypt
    magic link (`<url>#<password>`), so users unlock everything once. Raw
    dashboard passwords never sit in plaintext in the repo.
-2. **Feedback channel:** a form in the hub posts to a Slack incoming webhook.
-   Fallback is a prefilled `mailto:` link.
+2. **Feedback channel:** a form in the hub posts to a Slack Workflow Builder
+   webhook trigger (no Slack app install needed; confirmed working 2026-09-08).
+   The workflow formats and posts the message. Fallback is a prefilled `mailto:` link.
 3. **Depth of content:** each source card carries a description, coverage stats,
    3–5 headline findings, and 3–5 verbatim customer quotes. Deeper analysis lives
    in the linked dashboards.
@@ -101,7 +102,7 @@ CustomerInsightsHub/
   "hubPassword": "...",
   "ownerName": "Michael Horwitz",
   "ownerEmail": "michael.horwitz@duda.co",
-  "slackWebhookUrl": "https://hooks.slack.com/services/...",
+  "slackWebhookUrl": "https://hooks.slack.com/triggers/...",
   "feedbackTypes": ["Data request", "Question", "Bug", "Idea"]
 }
 ```
@@ -149,19 +150,25 @@ for the two audience tags (Sales, Marketing).
 
 **Feedback panel.** Sticky "Request or feedback" button opens a modal form:
 type (select from `feedbackTypes`), related source (select, includes "General"),
-message (textarea, required), your name (text, required). Submit posts to the
-Slack webhook with a `no-cors` POST whose body is `{ "text": ... }`. Because the
-response is opaque, the UI shows "Sent — thanks" on a resolved fetch and clears
-the form. If the fetch rejects, the form shows a prefilled `mailto:` link to
-`ownerEmail` with the same content, and the typed message is preserved.
+message (textarea, required), your name (text, required). Submit POSTs to the
+Slack workflow webhook a JSON body with exactly the four trigger variables:
 
-Slack message format:
+```json
+{ "type": "Idea", "source": "G2", "name": "Jane", "message": "..." }
+```
 
-```
-:speech_balloon: Insights Hub — <type> (<source>)
-From: <name>
-<message>
-```
+The endpoint returns `access-control-allow-origin: *` but no allowed-headers
+list, so the request is sent as a CORS *simple request*: `Content-Type:
+text/plain` with the JSON string as body, which avoids a preflight and lets the
+page read the response. Success is `HTTP 200` with `{"ok":true}`; the UI then
+shows "Sent — thanks" and clears the form. If the request fails or the response
+is not ok, the form shows a prefilled `mailto:` link to `ownerEmail` with the
+same content, and the typed message is preserved. Implementation must verify
+Slack accepts a `text/plain` body; if it does not, fall back to a `no-cors`
+JSON POST (opaque response, assume sent on resolve).
+
+Message formatting lives in the Slack workflow itself (a "Send a message" step
+using the four variables), not in the hub.
 
 **Design language.** Light, clean, generous whitespace, one accent color per
 source, system font stack. All CSS and JS inline. No external requests other than
