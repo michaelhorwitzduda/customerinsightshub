@@ -4,12 +4,220 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1c2430; --muted: #5b6570; --line: #e3e7ec;
+    --sales: #2f6fed; --marketing: #b5479a; --ok: #1f9d55; --radius: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 20px 120px; }
+  header h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header p.intro { max-width: 720px; color: var(--muted); margin: 0 0 14px; font-size: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; }
+  .tag.sales { background: var(--sales); } .tag.marketing { background: var(--marketing); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 32px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; gap: 14px; border-top: 5px solid var(--accent); }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 22px; flex: none; }
+  .card h2 { margin: 0 0 4px; font-size: 19px; }
+  .purpose { margin: 0; color: var(--muted); }
+  .tags { display: flex; gap: 6px; margin-top: 6px; }
+  .coverage { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; }
+  .coverage b { color: var(--ink); font-weight: 600; }
+  .open { display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 10px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; }
+  .open:hover { filter: brightness(0.94); }
+  .bestfor { display: grid; gap: 6px; font-size: 14px; }
+  .bestfor span.tag { margin-right: 6px; }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+  details summary { cursor: pointer; padding: 10px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details summary::after { content: "+"; color: var(--muted); }
+  details[open] summary::after { content: "–"; }
+  details ul { margin: 0 0 12px; padding-left: 18px; }
+  details li { margin: 6px 0; }
+  .quote { border-left: 3px solid var(--accent); padding: 6px 12px; margin: 0 0 12px; background: var(--bg); border-radius: 0 8px 8px 0; }
+  .quote p { margin: 0 0 4px; }
+  .quote .ctx { color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .copy { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+  .copy.done { color: var(--ok); border-color: var(--ok); }
+  .fab { position: fixed; right: 22px; bottom: 22px; background: var(--ink); color: #fff; border: 0; border-radius: 999px; padding: 14px 20px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+  .modal { position: fixed; inset: 0; background: rgba(20,26,34,.45); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal.on { display: flex; }
+  .sheet { background: #fff; border-radius: var(--radius); padding: 24px; width: 100%; max-width: 520px; display: grid; gap: 12px; }
+  .sheet h3 { margin: 0; }
+  .sheet label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  .sheet input, .sheet select, .sheet textarea { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; width: 100%; }
+  .sheet textarea { min-height: 110px; resize: vertical; }
+  .row { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+  .btn { font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn[disabled] { opacity: .6; cursor: default; }
+  .note { font-size: 13px; color: var(--muted); }
+  .note.ok { color: var(--ok); font-weight: 600; }
+  .note.err { color: #b42318; }
+  @media (max-width: 480px) { .wrap { padding: 24px 14px 110px; } header h1 { font-size: 24px; } }
+</style>
 </head>
 <body>
-<div id="app"></div>
+<div class="wrap">
+  <header>
+    <h1 id="title"></h1>
+    <p class="intro" id="intro"></p>
+    <div class="meta">
+      <span>Last updated <b id="updated"></b></span>
+      <span><span class="tag sales">Sales</span> useful for sales conversations</span>
+      <span><span class="tag marketing">Marketing</span> useful for messaging and campaigns</span>
+    </div>
+  </header>
+  <main class="grid" id="grid"></main>
+</div>
+
+<button class="fab" id="fab" type="button">Request or feedback</button>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+  <form class="sheet" id="fb-form">
+    <h3 id="fb-title">Request or feedback</h3>
+    <label>Type <select name="type" id="fb-type" required></select></label>
+    <label>Related source <select name="source" id="fb-source" required></select></label>
+    <label>Message <textarea name="message" id="fb-message" required placeholder="What do you need, or what did you notice?"></textarea></label>
+    <label>Your name <input name="name" id="fb-name" required autocomplete="name"></label>
+    <div class="note" id="fb-note"></div>
+    <div class="row">
+      <button class="btn" type="button" id="fb-cancel">Cancel</button>
+      <button class="btn primary" type="submit" id="fb-send">Send</button>
+    </div>
+  </form>
+</div>
+
 <script>window.HUB_DATA = /*__DATA__*/;</script>
 <script>
-document.getElementById('app').textContent = window.HUB_DATA.sources.map(s => s.name).join(', ') + ' · ' + window.HUB_DATA.buildDate;
+(function () {
+  const D = window.HUB_DATA;
+  const ICONS = { facebook: '👥', star: '⭐', chat: '💬', globe: '🌐' };
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, attrs, ...children) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === 'class') n.className = v;
+      else if (k === 'style') n.style.cssText = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    }
+    for (const c of children) n.append(c);
+    return n;
+  };
+
+  // Header
+  document.title = D.hub.title;
+  $('title').textContent = D.hub.title;
+  $('intro').textContent = D.hub.intro;
+  $('updated').textContent = D.buildDate;
+
+  // Cards
+  const grid = $('grid');
+  for (const s of D.sources) grid.append(renderCard(s));
+
+  function renderCard(s) {
+    const tags = el('div', { class: 'tags' }, ...s.audience.map(a => el('span', { class: 'tag ' + a }, a === 'sales' ? 'Sales' : 'Marketing')));
+    const head = el('div', { class: 'card-head' },
+      el('div', { class: 'icon' }, ICONS[s.icon] || '•'),
+      el('div', {}, el('h2', {}, s.name), el('p', { class: 'purpose' }, s.purpose), tags));
+    const cov = el('div', { class: 'coverage' },
+      el('span', {}, el('b', {}, s.coverage.sampleSize)),
+      el('span', {}, s.coverage.dateRange),
+      el('span', {}, 'Refreshed ', el('b', {}, s.coverage.lastRefreshed)));
+    const open = el('a', { class: 'open', href: s.dashboard.magicLink, target: '_blank', rel: 'noopener' }, 'Open dashboard ↗');
+    const best = el('div', { class: 'bestfor' },
+      el('div', {}, el('span', { class: 'tag sales' }, 'Sales'), s.bestFor.sales),
+      el('div', {}, el('span', { class: 'tag marketing' }, 'Marketing'), s.bestFor.marketing));
+    const findings = el('details', {}, el('summary', {}, 'Key findings (' + s.findings.length + ')'),
+      el('ul', {}, ...s.findings.map(f => el('li', {}, f))));
+    const quotes = el('details', {}, el('summary', {}, 'Quotes you can use (' + s.quotes.length + ')'),
+      ...s.quotes.map(renderQuote));
+    return el('article', { class: 'card', style: '--accent:' + s.accent }, head, cov, open, best, findings, quotes);
+  }
+
+  function renderQuote(q) {
+    const btn = el('button', { class: 'copy', type: 'button' }, 'Copy');
+    btn.addEventListener('click', async () => {
+      const text = '"' + q.text + '" — ' + q.context;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = el('textarea', {}, text); document.body.append(ta); ta.select();
+        try { document.execCommand('copy'); } finally { ta.remove(); }
+      }
+      btn.textContent = 'Copied'; btn.classList.add('done');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1500);
+    });
+    return el('blockquote', { class: 'quote' },
+      el('p', {}, '“' + q.text + '”'),
+      el('div', { class: 'ctx' }, el('span', {}, q.context), btn));
+  }
+
+  // Feedback modal (submit logic in feedback section below)
+  const modal = $('modal'), form = $('fb-form'), note = $('fb-note');
+  for (const t of D.hub.feedbackTypes) $('fb-type').append(el('option', { value: t }, t));
+  $('fb-source').append(el('option', { value: 'General' }, 'General'));
+  for (const s of D.sources) $('fb-source').append(el('option', { value: s.name }, s.name));
+  const openModal = () => { modal.classList.add('on'); $('fb-message').focus(); };
+  const closeModal = () => { modal.classList.remove('on'); note.textContent = ''; note.className = 'note'; };
+  $('fab').addEventListener('click', openModal);
+  $('fb-cancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('on')) closeModal(); });
+
+  function payload() {
+    return {
+      type: $('fb-type').value,
+      source: $('fb-source').value,
+      name: $('fb-name').value.trim(),
+      message: $('fb-message').value.trim(),
+    };
+  }
+
+  function mailtoFor(p) {
+    const subject = 'Insights Hub: ' + p.type + ' (' + p.source + ')';
+    const body = 'From: ' + p.name + '\n\n' + p.message;
+    return 'mailto:' + D.hub.ownerEmail + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
+
+  async function sendToSlack(p) {
+    // CORS "simple request": text/plain body avoids a preflight; Slack allows any origin.
+    const res = await fetch(D.hub.slackWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify(p),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    if (!/"ok"\s*:\s*true/.test(text)) throw new Error('Slack did not confirm: ' + text.slice(0, 120));
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const p = payload();
+    if (!p.message || !p.name) { note.textContent = 'Please add a message and your name.'; note.className = 'note err'; return; }
+    $('fb-send').disabled = true; note.textContent = 'Sending…'; note.className = 'note';
+    try {
+      await sendToSlack(p);
+      note.textContent = 'Sent — thanks, ' + p.name + '. ' + D.hub.ownerName + ' will follow up.';
+      note.className = 'note ok';
+      $('fb-message').value = '';
+      setTimeout(closeModal, 1800);
+    } catch (err) {
+      note.textContent = '';
+      note.className = 'note err';
+      note.append('Could not reach Slack (' + err.message + '). ',
+        el('a', { href: mailtoFor(p) }, 'Send it by email instead'), ' — your message is kept below.');
+    } finally {
+      $('fb-send').disabled = false;
+    }
+  });
+})();
 </script>
 </body>
 </html>
