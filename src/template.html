@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+</head>
+<body>
+<div id="app"></div>
+<script>window.HUB_DATA = /*__DATA__*/;</script>
+<script>
+document.getElementById('app').textContent = window.HUB_DATA.sources.map(s => s.name).join(', ') + ' · ' + window.HUB_DATA.buildDate;
+</script>
+</body>
+</html>
